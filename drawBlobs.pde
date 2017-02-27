@@ -23,8 +23,8 @@ void drawBlobsAndEdges(boolean drawBlobs, boolean drawEdges)
           eB = b.getEdgeVertexB(m);
           if (eA !=null && eB !=null)
             line(
-              eA.x*width, eA.y*height, 
-              eB.x*width, eB.y*height
+              eA.x*img.width, eA.y*img.height, 
+              eB.x*img.width, eB.y*img.height
               );
         }
       }
@@ -35,8 +35,8 @@ void drawBlobsAndEdges(boolean drawBlobs, boolean drawEdges)
         strokeWeight(1);
         stroke(255, 0, 0);
         rect(
-          b.xMin*width, b.yMin*height, 
-          b.w*width, b.h*height
+          b.xMin*img.width, b.yMin*img.height, 
+          b.w*img.width, b.h*img.height
           );
       }
     }
