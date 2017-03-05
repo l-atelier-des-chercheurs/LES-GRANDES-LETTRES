@@ -21,7 +21,7 @@ Capture cam;
 BlobDetection theBlobDetection;
 
 boolean recordSVG = false;
-boolean debug = false;
+boolean isDebug = false;
 
 PImage img;
 boolean newFrame=false;
@@ -32,12 +32,22 @@ int easeTraces;
 
 String currentMode = "mouse";
 PGraphics canvas;
+int setEpaisseurBoitier = 0;
+int defaultEpaisseurThickness = 5;
 
 String[] modesAvailable = {"mouse"};
 ArrayList<PVector> lineCoords = new ArrayList();
 
 PVector pointToTrace = new PVector(0, 0);
 PVector currentPointPosition = new PVector(0, 0);
+
+String setExportSuffix = "";
+
+// for animation when exporting is done
+int exportingAnimationMaxTime = 50;
+int exportingAnimation = 0;
+color[] exportAnimationColors = { color(27, 47, 129), color(75, 192, 180), color(255, 190, 50), color(255, 62, 81) };
+color exportRectangleColor;
 
 // function necessary for controlFrame
 void settings() {
@@ -52,7 +62,7 @@ void setup()
   } else {
     println("Available cameras:");
     for (int i = 0; i < cameras.length; i++) {
-      //println(cameras[i]);
+      println("camera at i: " + cameras[i]);
     }
     // The camera can be initialized directly using an 
     // element from the array returned by list():
@@ -77,22 +87,37 @@ void setup()
 // ==================================================
 void draw()
 {
-  background(0);
 
+  if (exportingAnimation > 0) {
+    exportingAnimation--;
+    println("export animation: " + exportingAnimation);
+    exportAnimation();
+  } else {
+    background(0);
 
-  // check if the coordinate is new
-  if (pointToTrace.mag() > 0 && PVector.dist(pointToTrace, currentPointPosition) > 1) {
-    println("New point detected. Number of points in path : " + lineCoords.size());
-    currentPointPosition.lerp(pointToTrace, (easeTraces)/100.0f);    
-    // show it, record it
-    recordCoordinates(currentPointPosition);
-  }
+    // check if the coordinate is empty
+    if (pointToTrace.mag() == 0) {
 
-  drawCoordinates();
+      recordCoordinates(currentPointPosition);
+      currentPointPosition = new PVector(0, 0);
+    } else if (PVector.dist(pointToTrace, currentPointPosition) > 1) {
+      println("New point detected. Number of points in path : " + lineCoords.size());
 
-  if (recordSVG) {
-    recordSVG = false;
-    exportShapeSVG();
+      if (currentPointPosition.mag() == 0) {
+        currentPointPosition = pointToTrace.copy();
+      }
+
+      currentPointPosition.lerp(pointToTrace, (easeTraces)/100.0f);    
+      // show it, record it
+      recordCoordinates(currentPointPosition);
+    }
+
+    drawCoordinates();
+    
+    if(recordSVG) {
+      recordSVG = false;
+      exportShapeSVG();
+    }
   }
 }
 
@@ -102,34 +127,71 @@ void recordCoordinates(PVector newVector) {
 
 void drawCoordinates() {
 
-  // dessiner le trait gauche
-  noStroke();
-  fill(255);
-  strokeWeight(0);
-  beginShape();
-  for (int i=2; i<lineCoords.size(); i++) {    
-    PVector ninety = getNinetyAtPoint(i);
-    PVector ninety2 = getNinetyAtPoint(i-1);
-    curveVertex(  ninety.x, ninety.y);      
-    //vertex( ninety2.x, ninety2.y);
-  }
-  for (int i=lineCoords.size()-1; i>2; i--) {    
-    PVector mninety = getMNinetyAtPoint(i);
-    PVector mninety2 = getMNinetyAtPoint(i-1);
-    curveVertex( mninety.x, mninety.y);      
-    //vertex( mninety2.x, mninety2.y);
-  }
-  endShape(CLOSE);
+  ArrayList<PVector>[] lines = new ArrayList[20];
+  int idx = 0;
+  lines[idx] = new ArrayList();
+  boolean newLineCreated = true;
 
-  if (debug) {
+  for (int i=0; i<lineCoords.size(); i++) {  
+    if (lineCoords.get(i).mag() == 0) {
+      if (!newLineCreated && idx < 20) {
+        idx++;
+        lines[idx] = new ArrayList();
+        newLineCreated = true;
+      }
+    } else {
+      lines[idx].add(lineCoords.get(i));
+      newLineCreated = false;
+    }
+  }
+
+  if (idx == 0 && lines[idx].isEmpty()) {
+    return;
+  }
+
+  for (int index=idx; index>=0; index--) {
+
+    if (lines[index].isEmpty())
+      continue;
+
+    PVector[] listOfPoints = new PVector[lines[index].size()];
+    listOfPoints = lines[index].toArray(listOfPoints);
+
+    // dessiner le trait gauche
+    noStroke();
+    fill(255);
+    strokeWeight(0);
+
+    if (isDebug) {
+      stroke(255, 0, 0);
+      noFill();
+      strokeWeight(2);
+    } 
+
+    beginShape();
+    for (int i=2; i<listOfPoints.length; i++) {    
+      PVector ninety = getNinetyAtPoint(listOfPoints, i);
+      PVector ninety2 = getNinetyAtPoint(listOfPoints, i-1);
+      vertex(  ninety.x, ninety.y);
+    }
+    for (int i=listOfPoints.length-1; i>2; i--) {    
+      PVector mninety = getMNinetyAtPoint(listOfPoints, i);
+      PVector mninety2 = getMNinetyAtPoint(listOfPoints, i-1);
+      vertex( mninety.x, mninety.y);      
+      //vertex( mninety2.x, mninety2.y);
+    }
+    endShape(CLOSE);
 
     stroke(255, 0, 0);
     noFill();
-    strokeWeight(5);
+    strokeWeight(0);
+    if (isDebug) {
+      strokeWeight(2);
+    }
 
     beginShape();
-    for (int i=0; i<lineCoords.size(); i++) {    
-      PVector coord = lineCoords.get(i);
+    for (int i=0; i<listOfPoints.length; i++) {    
+      PVector coord = listOfPoints[i];
       //vertex(coord.x, coord.y);
 
       stroke(0, 0, 255);
@@ -142,42 +204,43 @@ void drawCoordinates() {
     stroke(255, 255, 0);
     noFill();
 
-    point(currentPointPosition.x, currentPointPosition.y);
-    point(pointToTrace.x, pointToTrace.y);
+    if (isDebug) {
+      point(currentPointPosition.x, currentPointPosition.y);
+      point(pointToTrace.x, pointToTrace.y);
+    }
   }
 }
 
-PVector getNinetyAtPoint(int i) {
-  PVector coord1 = lineCoords.get(i-1);
-  PVector coord2 = lineCoords.get(i);
+PVector getNinetyAtPoint(PVector[] listOfPoints, int i) {
+  PVector coord1 = listOfPoints[i-1];
+  PVector coord2 = listOfPoints[i];
   PVector diff = PVector.sub(coord1, coord2);
 
   PVector ninety = PVector.fromAngle(diff.heading() - PI/2);
   ninety
     .normalize()
-    .setMag( diff.mag()/2 + 2)
-    //.setMag( 5)
-    .limit(15)
+    .setMag(diff.mag() + 5 + setEpaisseurBoitier)
+    .limit(30 + setEpaisseurBoitier)
     .add(coord2)
     ;
   return ninety;
 }
 
-PVector getMNinetyAtPoint(int i) {
-  PVector coord1 = lineCoords.get(i-1);
-  PVector coord2 = lineCoords.get(i);
+PVector getMNinetyAtPoint(PVector[] listOfPoints, int i) {
+  PVector coord1 = listOfPoints[i-1];
+  PVector coord2 = listOfPoints[i];
   PVector diff = PVector.sub(coord1, coord2);
 
   PVector mninety = PVector.fromAngle(diff.heading() + PI/2);
   mninety
     .normalize()
-    .setMag( diff.mag()/2 + 2)
-    //.setMag( 5)
-    .limit(15)
+    .setMag(diff.mag() + 5 + setEpaisseurBoitier)
+    .limit(30 + setEpaisseurBoitier)
     .add(coord2)
     ;
   return mninety;
 }
+
 
 
 void captureEvent(Capture cam)
@@ -190,20 +253,28 @@ public void startOver() {
   lineCoords.clear();
 }
 public void exportSVG() {
+  println("EXPORT SVG");
   recordSVG = true;
 }
 
 void exportShapeSVG() {
+  println("exportShapeSVG");
   DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss");
   java.util.Date d = new java.util.Date();
   String dateFichier = formatter.format(d);
-  String nomFichier = dateFichier + ".svg";
+  String nomFichier = dateFichier + "_" + setExportSuffix + ".svg";
 
+  println("Check point");
+  
   beginRecord(SVG, "exports/" + nomFichier);
   background(0);
   fill(255);
   drawCoordinates();
   endRecord();
+  
+  println("Export SVG done. Now animating");
+  exportingAnimation = exportingAnimationMaxTime;
+  exportRectangleColor = exportAnimationColors[int(random(exportAnimationColors.length))];
 }
 
 
@@ -211,4 +282,30 @@ void mouseDragged() {
   if (currentMode == "mouse") {
     pointToTrace = new PVector(mouseX, mouseY);
   }
+}
+void mouseReleased() {
+  pointToTrace = new PVector(0, 0);
+}
+
+
+void keyReleased() {
+  //println("key : " + key + " keyCode : " + keyCode);
+
+  // dodoc box, blue arrow left
+  if (key == 'w') {
+    // reduce stroke weight
+    setEpaisseurBoitier = setEpaisseurBoitier <= 0 ? 0 : (setEpaisseurBoitier - 2);
+    // dodoc box, blue arrow right
+  } else if (key == 's') {
+    setEpaisseurBoitier = setEpaisseurBoitier >= 20 ? 20 : (setEpaisseurBoitier + 2);
+    // dodoc box, green button
+  } else if (key == 'a') {
+    recordSVG = true;
+  } else if(key==' '){
+    startOver();
+  } else {
+    setExportSuffix = key + "";
+  }  
+
+  println("setEpaisseurBoitier ? " + setEpaisseurBoitier);
 }

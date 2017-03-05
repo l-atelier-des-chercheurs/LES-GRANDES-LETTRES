@@ -23,24 +23,32 @@ class ControlFrame extends PApplet {
 
     cp5.addSlider("Brightness Threshold")
       .plugTo(parent, "brightnessThreshold")
-      .setPosition(20, 90)
+      .setPosition(20, 50)
       .setSize(250, 30)
-      .setRange(0, 100)
+      .setRange(0, 50)
       .setValue(80)
       ;
 
     cp5.addSlider("Easing")
       .plugTo(parent, "easeTraces")
-      .setPosition(20, 120)
+      .setPosition(20, 90)
       .setSize(250, 30)
       .setRange(0, 100)
       .setValue(40)
       ;
 
+    cp5.addSlider("Thickness")
+      .plugTo(parent, "setEpaisseurBoitier")
+      .setPosition(20, 130)
+      .setSize(250, 30)
+      .setRange(0, 30)
+      .setValue(defaultEpaisseurThickness)
+      ;
+
     List l = Arrays.asList(modesAvailable);
     /* add a ScrollableList, by default it behaves like a DropdownList */
     cp5.addScrollableList("dropdown")
-      .setPosition(width/2 - 100, 160)
+      .setPosition(20, 190)
       .setSize(200, 100)
       .setBarHeight(20)
       .setItemHeight(20)
@@ -50,20 +58,20 @@ class ControlFrame extends PApplet {
 
     cp5.addToggle("Show Camera")
       .plugTo(parent, "showCamera")
-      .setPosition(40, 260)
+      .setPosition(width/2, 190)
       .setSize(20, 20)
       .setValue(false)
       ;
 
     cp5.addToggle("Show Blob Detection")
       .plugTo(parent, "showBlobDetection")
-      .setPosition(width/2 + 40, 260)
+      .setPosition(width/2, 230)
       .setSize(20, 20)
       .setValue(false)
       ;
-      
+
     cp5.addToggle("Debug")
-      .plugTo(parent, "debug")
+      .plugTo(parent, "isDebug")
       .setPosition(width - 80, 20)
       .setSize(20, 20)
       .setValue(false)
@@ -87,31 +95,46 @@ class ControlFrame extends PApplet {
 
   void draw() {
     noStroke();
-    fill(41);
-    rect(0, 0, width, height/2);
     fill(21);
+    rect(0, 0, width, height/2);
+    fill(41);
     rect(0, height/2 - 10, width, 20);
+    
+    textAlign(CENTER, CENTER);
+    fill(255);
+    text("Drawing an " + setExportSuffix, width/2, height/2);
 
     if (currentMode == "camera" && newFrame) {
       println("Got new camera frame");
-      
-      fill(0);
+
+      fill(21);
       rect(0, height/2 + 10, width, height/2);
 
       theBlobDetection.setThreshold(brightnessThreshold/100); // will detect bright areas whose luminosity > brightnessThreshold;
-      newFrame=false;
+      newFrame = false;
+
       img.copy(cam, 0, 0, cam.width, cam.height, 0, 0, img.width, img.height);
       fastblur(img, 2);
 
+      PImage flipped = createImage(img.width, img.height, RGB);//create a new image with the same dimensions
+      for (int i = 0; i < flipped.pixels.length; i++) {       //loop through each pixel
+        int srcX = i % flipped.width;                        //calculate source(original) x position
+        int dstX = flipped.width-srcX-1;                     //calculate destination(flipped) x position = (maximum-x-1)
+        int y    = i / flipped.width;                        //calculate y coordinate
+        flipped.pixels[y*flipped.width+dstX] = img.pixels[i];//write the destination(x flipped) pixel based on the current pixel
+      }    
+      img = flipped;
+      
       theBlobDetection.computeBlobs(img.pixels);      
       PVector brightestBlobCenter = getBrightestBlobCenter();
 
       if (brightestBlobCenter.mag() > 0) {
-        pointToTrace = brightestBlobCenter.copy();
         println("Found a bright point at x=" + pointToTrace.x + " y=" + pointToTrace.y);
       } else {
         println("No lights detected");
       }
+
+      pointToTrace = brightestBlobCenter.copy();
 
       pushMatrix();
       translate(30, height/2 + 30);
