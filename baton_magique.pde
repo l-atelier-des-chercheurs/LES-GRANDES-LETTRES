@@ -12,7 +12,7 @@ import controlP5.*;
 
 import java.text.*;
 
-import java.util.List;
+import java.util.*;
 import processing.svg.PGraphicsSVG;
 
 ControlFrame cf;
@@ -21,16 +21,23 @@ Capture cam;
 BlobDetection theBlobDetection;
 
 boolean recordSVG = false;
+boolean debug = false;
 
 PImage img;
 boolean newFrame=false;
 // set default in controlFrame.pde
 float brightnessThreshold;
 boolean showCamera, showBlobDetection;
+int easeTraces;
 
+String currentMode = "mouse";
 PGraphics canvas;
 
+String[] modesAvailable = {"mouse"};
 ArrayList<PVector> lineCoords = new ArrayList();
+
+PVector pointToTrace = new PVector(0, 0);
+PVector currentPointPosition = new PVector(0, 0);
 
 // function necessary for controlFrame
 void settings() {
@@ -39,11 +46,7 @@ void settings() {
 
 void setup()
 {
-  cf = new ControlFrame(this, 640, 480, "Controls");
-  canvas = createGraphics(640, 480);
-
   String[] cameras = Capture.list();
-
   if (cameras.length == 0) {
     println("There are no cameras available for capture.");
   } else {
@@ -61,7 +64,12 @@ void setup()
     img = new PImage(192, 108); 
     theBlobDetection = new BlobDetection(img.width, img.height);
     theBlobDetection.setPosDiscrimination(true);
+
+    modesAvailable = append(modesAvailable, "camera");
   }
+
+  cf = new ControlFrame(this, 480, 640, "Controls");
+  canvas = createGraphics(640, 480);
 }
 
 // ==================================================
@@ -69,51 +77,27 @@ void setup()
 // ==================================================
 void draw()
 {
-  if (newFrame)
-  {
-
-    background(0);
-
-    theBlobDetection.setThreshold(brightnessThreshold/100); // will detect bright areas whose luminosity > 0.2f;
-    newFrame=false;
-    //image(cam,0,0,width,height);
-    img.copy(cam, 0, 0, cam.width, cam.height, 
-      0, 0, img.width, img.height);
-    fastblur(img, 2);
-
-    theBlobDetection.computeBlobs(img.pixels);
-
-    PVector brightestBlobCenter = getBrightestBlobCenter();
-
-    if (mousePressed) {
-      recordCoordinates(mouseX, mouseY);
-    }
-    //recordCoordinates(brightestBlobCenter.x, brightestBlobCenter.y);
-
-    drawCoordinates();
-
-    if (recordSVG) {
-      recordSVG = false;
-      exportShapeSVG();
-    }
+  background(0);
 
 
-    if (showCamera) {
-      image(img, 0, 0, img.width, img.height);
-    }
+  // check if the coordinate is new
+  if (pointToTrace.mag() > 0 && PVector.dist(pointToTrace, currentPointPosition) > 1) {
+    println("New point detected. Number of points in path : " + lineCoords.size());
+    currentPointPosition.lerp(pointToTrace, (easeTraces)/100.0f);    
+    // show it, record it
+    recordCoordinates(currentPointPosition);
+  }
 
-    if (showBlobDetection) {
-      drawBlobsAndEdges(true, true);
-    }
+  drawCoordinates();
 
-    strokeWeight(1);
-    stroke(255, 0, 0);
-    point(brightestBlobCenter.x, brightestBlobCenter.y);
+  if (recordSVG) {
+    recordSVG = false;
+    exportShapeSVG();
   }
 }
 
-void recordCoordinates(float x, float y) {
-  lineCoords.add(new PVector(x, y));
+void recordCoordinates(PVector newVector) {
+  lineCoords.add(newVector.copy());
 }
 
 void drawCoordinates() {
@@ -121,20 +105,46 @@ void drawCoordinates() {
   // dessiner le trait gauche
   noStroke();
   fill(255);
+  strokeWeight(0);
   beginShape();
-  for (int i=3; i<lineCoords.size(); i++) {    
+  for (int i=2; i<lineCoords.size(); i++) {    
     PVector ninety = getNinetyAtPoint(i);
     PVector ninety2 = getNinetyAtPoint(i-1);
     curveVertex(  ninety.x, ninety.y);      
     //vertex( ninety2.x, ninety2.y);
   }
-  for (int i=lineCoords.size()-1; i>3; i--) {    
+  for (int i=lineCoords.size()-1; i>2; i--) {    
     PVector mninety = getMNinetyAtPoint(i);
     PVector mninety2 = getMNinetyAtPoint(i-1);
     curveVertex( mninety.x, mninety.y);      
     //vertex( mninety2.x, mninety2.y);
   }
   endShape(CLOSE);
+
+  if (debug) {
+
+    stroke(255, 0, 0);
+    noFill();
+    strokeWeight(5);
+
+    beginShape();
+    for (int i=0; i<lineCoords.size(); i++) {    
+      PVector coord = lineCoords.get(i);
+      //vertex(coord.x, coord.y);
+
+      stroke(0, 0, 255);
+      point(coord.x, coord.y);
+
+      //print("-- i: " + i + " and x:" + coord.x);
+    }
+    endShape();
+
+    stroke(255, 255, 0);
+    noFill();
+
+    point(currentPointPosition.x, currentPointPosition.y);
+    point(pointToTrace.x, pointToTrace.y);
+  }
 }
 
 PVector getNinetyAtPoint(int i) {
@@ -194,4 +204,11 @@ void exportShapeSVG() {
   fill(255);
   drawCoordinates();
   endRecord();
+}
+
+
+void mouseDragged() {
+  if (currentMode == "mouse") {
+    pointToTrace = new PVector(mouseX, mouseY);
+  }
 }
