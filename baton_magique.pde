@@ -46,7 +46,6 @@ void setup()
 
   if (cameras.length == 0) {
     println("There are no cameras available for capture.");
-    exit();
   } else {
     println("Available cameras:");
     for (int i = 0; i < cameras.length; i++) {
@@ -56,14 +55,13 @@ void setup()
     // element from the array returned by list():
     cam = new Capture(this, cameras[0]);
     cam.start();
+
+    // BlobDetection
+    // img which will be sent to detection (a smaller copy of the cam frame);
+    img = new PImage(192, 108); 
+    theBlobDetection = new BlobDetection(img.width, img.height);
+    theBlobDetection.setPosDiscrimination(true);
   }
-
-
-  // BlobDetection
-  // img which will be sent to detection (a smaller copy of the cam frame);
-  img = new PImage(192, 108); 
-  theBlobDetection = new BlobDetection(img.width, img.height);
-  theBlobDetection.setPosDiscrimination(true);
 }
 
 // ==================================================
