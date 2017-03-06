@@ -4,6 +4,7 @@ class ControlFrame extends PApplet {
   int w, h;
   PApplet parent;
   ControlP5 cp5;
+  int darkenCameraImage = 0;
 
   public ControlFrame(PApplet _parent, int _w, int _h, String _name) {
     super();   
@@ -23,10 +24,17 @@ class ControlFrame extends PApplet {
 
     cp5.addSlider("Brightness Threshold")
       .plugTo(parent, "brightnessThreshold")
-      .setPosition(20, 50)
-      .setSize(250, 30)
+      .setPosition(20, 45)
+      .setSize(250, 15)
       .setRange(0, 50)
       .setValue(80)
+      ;
+    cp5.addSlider("Darken Camera Image")
+      .plugTo(this, "darkenCameraImage")
+      .setPosition(20, 65)
+      .setSize(250, 15)
+      .setRange(0, 100)
+      .setValue(0)
       ;
 
     cp5.addSlider("Easing")
@@ -124,13 +132,16 @@ class ControlFrame extends PApplet {
 
       img.copy(cam, 0, 0, cam.width, cam.height, 0, 0, img.width, img.height);
       fastblur(img, 2);
+      
+      float darkenValue = darkenCameraImage/100.0f;
 
       PImage flipped = createImage(img.width, img.height, RGB);//create a new image with the same dimensions
       for (int i = 0; i < flipped.pixels.length; i++) {       //loop through each pixel
         int srcX = i % flipped.width;                        //calculate source(original) x position
         int dstX = flipped.width-srcX-1;                     //calculate destination(flipped) x position = (maximum-x-1)
-        int y    = i / flipped.width;                        //calculate y coordinate
-        flipped.pixels[y*flipped.width+dstX] = img.pixels[i];//write the destination(x flipped) pixel based on the current pixel
+        int y    = i / flipped.width;                 //calculate y coordinate
+        color pixColor = lerpColor(img.pixels[i], color(0), darkenValue);
+        flipped.pixels[y*flipped.width+dstX] = pixColor;//write the destination(x flipped) pixel based on the current pixel
       }    
       img = flipped;
 
