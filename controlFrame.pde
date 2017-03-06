@@ -61,7 +61,7 @@ class ControlFrame extends PApplet {
       /* add a ScrollableList, by default it behaves like a DropdownList */
       cp5.addScrollableList("allConnectedCameras")
         .setPosition(20, 250)
-        .setSize(200, 140)
+        .setSize(200, 170)
         .setBarHeight(20)
         .setItemHeight(20)
         .addItems(n)

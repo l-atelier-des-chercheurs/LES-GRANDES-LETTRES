@@ -218,6 +218,12 @@ void drawCoordinates() {
       point(pointToTrace.x, pointToTrace.y);
     }
   }
+  
+  stroke(255,0,0);
+  strokeWeight(1);
+  int carreWidth = 600;
+  rect( width/2 - carreWidth/2, height/2 - carreWidth/2, carreWidth, carreWidth);
+  
 }
 
 PVector getNinetyAtPoint(PVector[] listOfPoints, int i) {
