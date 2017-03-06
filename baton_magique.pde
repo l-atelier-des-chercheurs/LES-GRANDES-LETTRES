@@ -105,7 +105,7 @@ void draw()
       recordCoordinates(currentPointPosition);
       currentPointPosition = new PVector(0, 0);
     } else if (PVector.dist(pointToTrace, currentPointPosition) > 0) {
-      println("New point detected. Number of points in path : " + lineCoords.size());
+      //println("New point detected. Number of points in path : " + lineCoords.size());
 
       if (currentPointPosition.mag() == 0) {
         currentPointPosition = pointToTrace.copy();
@@ -210,6 +210,7 @@ void drawCoordinates() {
         PVector coord = listOfPoints[i];
         vertex(coord.x, coord.y);
         //print("-- i: " + i + " and x:" + coord.x);
+        ellipse(coord.x, coord.y, 10, 10);
       }
       endShape();
     }
@@ -228,11 +229,13 @@ PVector getNinetyAtPoint(PVector[] listOfPoints, int i) {
   PVector coord1 = new PVector(listOfPoints[i-1].x, listOfPoints[i-1].y);
   PVector coord2 = new PVector(listOfPoints[i].x, listOfPoints[i].y);
   PVector diff = PVector.sub(coord1, coord2);
+  
+  float timeDiff = diff.mag() / abs(listOfPoints[i-1].z - listOfPoints[i].z);
 
   PVector ninety = PVector.fromAngle(diff.heading() - PI/2);
   ninety
     .normalize()
-    .setMag(diff.mag() + 5 + setEpaisseurBoitier)
+    .setMag(timeDiff*10 + 5 + setEpaisseurBoitier)
     .limit(30 + setEpaisseurBoitier)
     .add(coord2)
     ;
@@ -244,10 +247,12 @@ PVector getMNinetyAtPoint(PVector[] listOfPoints, int i) {
   PVector coord2 = new PVector(listOfPoints[i].x, listOfPoints[i].y);
   PVector diff = PVector.sub(coord1, coord2);
 
+  float timeDiff = diff.mag() / abs(listOfPoints[i-1].z - listOfPoints[i].z);
+
   PVector mninety = PVector.fromAngle(diff.heading() + PI/2);
   mninety
     .normalize()
-    .setMag(diff.mag() + 5 + setEpaisseurBoitier)
+    .setMag(timeDiff*10 + 5 + setEpaisseurBoitier)
     .limit(30 + setEpaisseurBoitier)
     .add(coord2)
     ;
