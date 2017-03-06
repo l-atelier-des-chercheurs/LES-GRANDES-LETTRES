@@ -115,8 +115,8 @@ void draw()
     drawCoordinates();
     
     if(recordSVG) {
-      recordSVG = false;
       exportShapeSVG();
+      recordSVG = false;
     }
   }
 }
@@ -164,6 +164,7 @@ void drawCoordinates() {
 
     if (isDebug) {
       stroke(255, 0, 0);
+      fill(255,0,255);
       noFill();
       strokeWeight(2);
     } 
@@ -172,13 +173,18 @@ void drawCoordinates() {
     for (int i=2; i<listOfPoints.length; i++) {    
       PVector ninety = getNinetyAtPoint(listOfPoints, i);
       PVector ninety2 = getNinetyAtPoint(listOfPoints, i-1);
-      vertex(  ninety.x, ninety.y);
+      vertex(ninety.x, ninety.y);
+      if(isDebug)
+        ellipse(ninety.x, ninety.y, 10, 10);
+      
     }
     for (int i=listOfPoints.length-1; i>2; i--) {    
       PVector mninety = getMNinetyAtPoint(listOfPoints, i);
       PVector mninety2 = getMNinetyAtPoint(listOfPoints, i-1);
       vertex( mninety.x, mninety.y);      
       //vertex( mninety2.x, mninety2.y);
+      if(isDebug)
+        ellipse(mninety.x, mninety.y, 10, 10);
     }
     endShape(CLOSE);
 
@@ -189,17 +195,17 @@ void drawCoordinates() {
       strokeWeight(2);
     }
 
-    beginShape();
-    for (int i=0; i<listOfPoints.length; i++) {    
-      PVector coord = listOfPoints[i];
-      //vertex(coord.x, coord.y);
-
+    
+    if(recordSVG || isDebug) {
       stroke(0, 0, 255);
-      point(coord.x, coord.y);
-
-      //print("-- i: " + i + " and x:" + coord.x);
+      beginShape();
+      for (int i=0; i<listOfPoints.length; i++) {    
+        PVector coord = listOfPoints[i];
+        vertex(coord.x, coord.y);
+        //print("-- i: " + i + " and x:" + coord.x);
+      }
+      endShape();
     }
-    endShape();
 
     stroke(255, 255, 0);
     noFill();
