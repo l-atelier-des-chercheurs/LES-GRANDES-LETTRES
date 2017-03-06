@@ -152,10 +152,6 @@ class ControlFrame extends PApplet {
 
       drawBlobsAndEdges(true, true);
 
-      strokeWeight(1);
-      stroke(255, 0, 0);
-      point(pointToTrace.x, pointToTrace.y);
-
       popMatrix();
     }
   }
