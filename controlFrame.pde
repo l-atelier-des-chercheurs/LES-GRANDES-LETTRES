@@ -48,26 +48,35 @@ class ControlFrame extends PApplet {
     List l = Arrays.asList(modesAvailable);
     /* add a ScrollableList, by default it behaves like a DropdownList */
     cp5.addScrollableList("dropdown")
-      .setPosition(20, 190)
-      .setSize(200, 100)
+      .setPosition(20, 180)
+      .setSize(200, 60)
       .setBarHeight(20)
       .setItemHeight(20)
       .addItems(l)
       .setType(ScrollableList.DROPDOWN) // currently supported DROPDOWN and LIST
       ;
 
-    cp5.addToggle("Show Camera")
-      .plugTo(parent, "showCamera")
-      .setPosition(width/2, 190)
-      .setSize(20, 20)
-      .setValue(false)
-      ;
+    if (allConnectedCameras.length > 0) {
+      List n = Arrays.asList(allConnectedCameras);
+      /* add a ScrollableList, by default it behaves like a DropdownList */
+      cp5.addScrollableList("allConnectedCameras")
+        .setPosition(20, 250)
+        .setSize(200, 140)
+        .setBarHeight(20)
+        .setItemHeight(20)
+        .addItems(n)
+        .setType(ScrollableList.DROPDOWN) // currently supported DROPDOWN and LIST
+        ;
+    }
 
-    cp5.addToggle("Show Blob Detection")
-      .plugTo(parent, "showBlobDetection")
-      .setPosition(width/2, 230)
-      .setSize(20, 20)
-      .setValue(false)
+    List m = Arrays.asList("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", ".", ",", "!", "?");
+    cp5.addScrollableList("selectionLettres")
+      .setPosition(width/2+10, 180)
+      .setSize(200, 130)
+      .setBarHeight(20)
+      .setItemHeight(20)
+      .addItems(m)
+      .setType(ScrollableList.DROPDOWN) // currently supported DROPDOWN and LIST
       ;
 
     cp5.addToggle("Debug")
@@ -96,19 +105,19 @@ class ControlFrame extends PApplet {
   void draw() {
     noStroke();
     fill(21);
-    rect(0, 0, width, height/2);
+    rect(0, 0, width, 450);
     fill(41);
-    rect(0, height/2 - 10, width, 20);
-    
+    rect(0, 450 - 10, width, 20);
+
     textAlign(CENTER, CENTER);
     fill(255);
-    text("Drawing an " + setExportSuffix, width/2, height/2);
+    text("drawing letter " + setExportSuffix, width/2, 450);
 
-    if (currentMode == "camera" && newFrame) {
+    if (currentMode == "camera") {
       println("Got new camera frame");
 
       fill(21);
-      rect(0, height/2 + 10, width, height/2);
+      rect(0, 450 + 10, width, height/2);
 
       theBlobDetection.setThreshold(brightnessThreshold/100); // will detect bright areas whose luminosity > brightnessThreshold;
       newFrame = false;
@@ -124,7 +133,7 @@ class ControlFrame extends PApplet {
         flipped.pixels[y*flipped.width+dstX] = img.pixels[i];//write the destination(x flipped) pixel based on the current pixel
       }    
       img = flipped;
-      
+
       theBlobDetection.computeBlobs(img.pixels);      
       PVector brightestBlobCenter = getBrightestBlobCenter();
 
@@ -137,15 +146,11 @@ class ControlFrame extends PApplet {
       pointToTrace = brightestBlobCenter.copy();
 
       pushMatrix();
-      translate(30, height/2 + 30);
+      translate(30, 450 + 30);
 
-      if (showCamera) {
-        image(img, 0, 0);
-      }
+      image(img, 0, 0);
 
-      if (showBlobDetection) {
-        drawBlobsAndEdges(true, true);
-      }
+      drawBlobsAndEdges(true, true);
 
       strokeWeight(1);
       stroke(255, 0, 0);
@@ -158,9 +163,19 @@ class ControlFrame extends PApplet {
     /* request the selected item based on index n */
     currentMode = cp5.get(ScrollableList.class, "dropdown").getItem(n).get("name").toString();
   }
+  void selectionLettres(int n) {
+    println("select Letter");
+    setExportSuffix = cp5.get(ScrollableList.class, "selectionLettres").getItem(n).get("name").toString();
+  }
+  void allConnectedCameras(int n) {
+    cam.stop();
+    println("Switch to feed : " + allConnectedCameras[n]);
+    cam = null;
+    cam = new Capture(parent, allConnectedCameras[n]);
+    cam.start();
+  }
 
   void drawBlobsAndEdges(boolean drawBlobs, boolean drawEdges) {
-
 
     noFill();
     Blob b;
@@ -199,5 +214,31 @@ class ControlFrame extends PApplet {
         }
       }
     }
+  }
+
+  void keyReleased() {
+    // dodoc box, blue arrow left
+    if (key == 'w') {
+      // reduce stroke weight
+      setEpaisseurBoitier = setEpaisseurBoitier <= 0 ? 0 : (setEpaisseurBoitier - 2);
+      // dodoc box, blue arrow right
+    } else if (key == 's') {
+      setEpaisseurBoitier = setEpaisseurBoitier >= 20 ? 20 : (setEpaisseurBoitier + 2);
+      // dodoc box, green button
+    } else if (key == 'a') {
+      recordSVG = true;
+    } else if (key == '1') {
+      setExportSuffix = 'w' + "";
+    } else if (key == '2') {
+      setExportSuffix = 'a' + "";
+    } else if (key == '3') {
+      setExportSuffix = 's' + "";
+    } else if (key==' ') {
+      startOver();
+    } else {
+      setExportSuffix = key + "";
+    }
+
+    println("setEpaisseurBoitier ? " + setEpaisseurBoitier);
   }
 }

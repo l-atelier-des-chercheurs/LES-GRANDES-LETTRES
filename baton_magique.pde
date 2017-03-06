@@ -36,6 +36,9 @@ int setEpaisseurBoitier = 0;
 int defaultEpaisseurThickness = 5;
 
 String[] modesAvailable = {"mouse"};
+String[] allConnectedCameras = {};
+
+// in lineCoords, x and y are used for position and z is used for the timestamp of the capture
 ArrayList<PVector> lineCoords = new ArrayList();
 
 PVector pointToTrace = new PVector(0, 0);
@@ -76,6 +79,7 @@ void setup()
     theBlobDetection.setPosDiscrimination(true);
 
     modesAvailable = append(modesAvailable, "camera");
+    allConnectedCameras = concat(allConnectedCameras, cameras);
   }
 
   cf = new ControlFrame(this, 480, 640, "Controls");
@@ -97,10 +101,9 @@ void draw()
 
     // check if the coordinate is empty
     if (pointToTrace.mag() == 0) {
-
       recordCoordinates(currentPointPosition);
       currentPointPosition = new PVector(0, 0);
-    } else if (PVector.dist(pointToTrace, currentPointPosition) > 1) {
+    } else if (PVector.dist(pointToTrace, currentPointPosition) > 0) {
       println("New point detected. Number of points in path : " + lineCoords.size());
 
       if (currentPointPosition.mag() == 0) {
@@ -294,9 +297,10 @@ void mouseReleased() {
 }
 
 
-void keyReleased() {
-  //println("key : " + key + " keyCode : " + keyCode);
 
+// code duplicate with controlframe
+void keyReleased() {
+  
   // dodoc box, blue arrow left
   if (key == 'w') {
     // reduce stroke weight
