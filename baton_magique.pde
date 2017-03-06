@@ -52,6 +52,8 @@ int exportingAnimation = 0;
 color[] exportAnimationColors = { color(27, 47, 129), color(75, 192, 180), color(255, 190, 50), color(255, 62, 81) };
 color exportRectangleColor;
 
+float lineTrace = 0;
+
 // function necessary for controlFrame
 void settings() {
   size(1200, 800);
@@ -172,6 +174,8 @@ void drawCoordinates() {
       strokeWeight(2);
     } 
 
+    lineTrace = 0;
+  
     beginShape();
     for (int i=2; i<listOfPoints.length; i++) {    
       PVector ninety = getNinetyAtPoint(listOfPoints, i);
@@ -179,7 +183,6 @@ void drawCoordinates() {
       vertex(ninety.x, ninety.y);
       if(isDebug)
         ellipse(ninety.x, ninety.y, 10, 10);
-      
     }
     for (int i=listOfPoints.length-1; i>2; i--) {    
       PVector mninety = getMNinetyAtPoint(listOfPoints, i);
@@ -198,7 +201,6 @@ void drawCoordinates() {
       strokeWeight(2);
     }
 
-    
     if(recordSVG || isDebug) {
       stroke(0, 0, 255);
       beginShape();
@@ -231,11 +233,13 @@ PVector getNinetyAtPoint(PVector[] listOfPoints, int i) {
   PVector coord1 = listOfPoints[i-1];
   PVector coord2 = listOfPoints[i];
   PVector diff = PVector.sub(coord1, coord2);
+  
+  lineTrace = lerp(lineTrace, diff.mag()*2, .4);
 
   PVector ninety = PVector.fromAngle(diff.heading() - PI/2);
   ninety
     .normalize()
-    .setMag(diff.mag() + 5 + setEpaisseurBoitier)
+    .setMag(lineTrace + 5 + setEpaisseurBoitier)
     .limit(30 + setEpaisseurBoitier)
     .add(coord2)
     ;
@@ -246,11 +250,13 @@ PVector getMNinetyAtPoint(PVector[] listOfPoints, int i) {
   PVector coord1 = listOfPoints[i-1];
   PVector coord2 = listOfPoints[i];
   PVector diff = PVector.sub(coord1, coord2);
+  
+  lineTrace = lerp(lineTrace, diff.mag()*2, .4);
 
   PVector mninety = PVector.fromAngle(diff.heading() + PI/2);
   mninety
     .normalize()
-    .setMag(diff.mag() + 5 + setEpaisseurBoitier)
+    .setMag(lineTrace + 5 + setEpaisseurBoitier)
     .limit(30 + setEpaisseurBoitier)
     .add(coord2)
     ;
