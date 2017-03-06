@@ -34,7 +34,7 @@ class ControlFrame extends PApplet {
       .setPosition(20, 90)
       .setSize(250, 30)
       .setRange(0, 100)
-      .setValue(40)
+      .setValue(18)
       ;
 
     cp5.addSlider("Thickness")
