@@ -104,7 +104,7 @@ void draw()
       recordCoordinates(currentPointPosition);
       currentPointPosition = new PVector(0, 0);
     } else if (PVector.dist(pointToTrace, currentPointPosition) > 0) {
-      println("New point detected. Number of points in path : " + lineCoords.size());
+      //println("New point detected. Number of points in path : " + lineCoords.size());
 
       if (currentPointPosition.mag() == 0) {
         currentPointPosition = pointToTrace.copy();
@@ -137,7 +137,7 @@ void drawCoordinates() {
 
   for (int i=0; i<lineCoords.size(); i++) {  
     if (lineCoords.get(i).mag() == 0) {
-      if (!newLineCreated && idx < 20) {
+      if (!newLineCreated && idx < lines.length-1) {
         idx++;
         lines[idx] = new ArrayList();
         newLineCreated = true;

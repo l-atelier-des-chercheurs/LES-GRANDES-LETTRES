@@ -46,6 +46,7 @@ float getBlobBrightness(int n) {
       //  eA.x*width, eA.y*height, 
       //  eB.x*width, eB.y*height
       //  );
+      
       brightness++;
   }
   
