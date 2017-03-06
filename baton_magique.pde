@@ -149,7 +149,7 @@ void drawCoordinates() {
   }
 
   if (idx == 0 && lines[idx].isEmpty()) {
-    return;
+    //return;
   }
 
   for (int index=idx; index>=0; index--) {
@@ -220,10 +220,11 @@ void drawCoordinates() {
   }
   
   stroke(255,0,0);
+  noFill();
   strokeWeight(1);
   int carreWidth = 600;
   rect( width/2 - carreWidth/2, height/2 - carreWidth/2, carreWidth, carreWidth);
-  
+   
 }
 
 PVector getNinetyAtPoint(PVector[] listOfPoints, int i) {
