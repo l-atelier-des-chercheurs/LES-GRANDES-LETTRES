@@ -40,6 +40,7 @@ String[] allConnectedCameras = {};
 
 // in lineCoords, x and y are used for position and z is used for the timestamp of the capture
 ArrayList<PVector> lineCoords = new ArrayList();
+ArrayList<Integer> lineCoordsTimestamp = new ArrayList();
 
 PVector pointToTrace = new PVector(0, 0);
 PVector currentPointPosition = new PVector(0, 0);
@@ -126,15 +127,17 @@ void draw()
 
 void recordCoordinates(PVector newVector) {
   lineCoords.add(newVector.copy());
+  lineCoordsTimestamp.add(millis());
 }
 
 void drawCoordinates() {
 
-  ArrayList<PVector>[] lines = new ArrayList[20];
   int idx = 0;
+  ArrayList<PVector>[] lines = new ArrayList[20];
   lines[idx] = new ArrayList();
   boolean newLineCreated = true;
 
+  // rebuild traces with different lines
   for (int i=0; i<lineCoords.size(); i++) {  
     if (lineCoords.get(i).mag() == 0) {
       if (!newLineCreated && idx < 20) {
@@ -143,7 +146,8 @@ void drawCoordinates() {
         newLineCreated = true;
       }
     } else {
-      lines[idx].add(lineCoords.get(i));
+      PVector spaceAndTimeVector = new PVector(lineCoords.get(i).x, lineCoords.get(i).y, lineCoordsTimestamp.get(i));
+      lines[idx].add(spaceAndTimeVector);
       newLineCreated = false;
     }
   }
@@ -221,8 +225,8 @@ void drawCoordinates() {
 }
 
 PVector getNinetyAtPoint(PVector[] listOfPoints, int i) {
-  PVector coord1 = listOfPoints[i-1];
-  PVector coord2 = listOfPoints[i];
+  PVector coord1 = new PVector(listOfPoints[i-1].x, listOfPoints[i-1].y);
+  PVector coord2 = new PVector(listOfPoints[i].x, listOfPoints[i].y);
   PVector diff = PVector.sub(coord1, coord2);
 
   PVector ninety = PVector.fromAngle(diff.heading() - PI/2);
@@ -236,8 +240,8 @@ PVector getNinetyAtPoint(PVector[] listOfPoints, int i) {
 }
 
 PVector getMNinetyAtPoint(PVector[] listOfPoints, int i) {
-  PVector coord1 = listOfPoints[i-1];
-  PVector coord2 = listOfPoints[i];
+  PVector coord1 = new PVector(listOfPoints[i-1].x, listOfPoints[i-1].y);
+  PVector coord2 = new PVector(listOfPoints[i].x, listOfPoints[i].y);
   PVector diff = PVector.sub(coord1, coord2);
 
   PVector mninety = PVector.fromAngle(diff.heading() + PI/2);
